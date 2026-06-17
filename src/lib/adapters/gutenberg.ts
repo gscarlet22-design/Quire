@@ -19,7 +19,7 @@ interface OpdsLink {
 interface OpdsEntry {
   id?: string;
   title?: string;
-  author?: { name?: string } | { name?: string }[];
+  author?: { name?: string } | { name?: string }[] | string;
   link?: OpdsLink[];
 }
 
@@ -35,8 +35,12 @@ function pickType(links: OpdsLink[] = [], type: string): string {
 
 function authorName(raw: OpdsEntry['author']): string {
   if (!raw) return 'Unknown';
-  const obj = Array.isArray(raw) ? raw[0] : raw;
-  const name = obj?.name ?? 'Unknown';
+  const name =
+    typeof raw === 'string'
+      ? raw
+      : Array.isArray(raw)
+        ? (raw[0]?.name ?? 'Unknown')
+        : (raw.name ?? 'Unknown');
   const parts = name.split(', ');
   return parts.length === 2 ? `${parts[1]} ${parts[0]}` : name;
 }
