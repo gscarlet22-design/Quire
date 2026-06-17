@@ -3,6 +3,7 @@ import type { SourceAdapter, CatalogEntry } from '@/lib/types';
 
 const BASE = 'https://standardebooks.org';
 const FEED_URL = `${BASE}/feeds/opds/all`;
+const NEW_RELEASES_URL = `${BASE}/feeds/opds/new-releases`;
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -77,6 +78,6 @@ export const standardEbooksAdapter: SourceAdapter = {
   },
 
   async browse() {
-    return fetchFeed(FEED_URL);
+    return fetchFeed(NEW_RELEASES_URL);
   },
 };
