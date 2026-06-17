@@ -2,7 +2,7 @@ import type { CatalogEntry } from '@/lib/types';
 
 const SOURCE_LABELS: Record<string, string> = {
   'standard-ebooks': 'Standard Ebooks',
-  gutendex: 'Project Gutenberg',
+  gutenberg: 'Project Gutenberg',
 };
 
 export function ResultCard({ entry }: { entry: CatalogEntry }) {

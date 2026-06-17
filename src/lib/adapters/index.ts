@@ -1,5 +1,5 @@
 import type { SourceAdapter } from '@/lib/types';
 import { standardEbooksAdapter } from './standard-ebooks';
-import { gutendexAdapter } from './gutendex';
+import { gutenbergAdapter } from './gutenberg';
 
-export const adapters: SourceAdapter[] = [standardEbooksAdapter, gutendexAdapter];
+export const adapters: SourceAdapter[] = [standardEbooksAdapter, gutenbergAdapter];
