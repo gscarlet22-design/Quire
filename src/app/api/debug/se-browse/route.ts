@@ -1,5 +1,5 @@
 export async function GET() {
-  const res = await fetch('https://standardebooks.org/feeds/opds/new-releases', {
+  const res = await fetch('https://standardebooks.org/feeds/atom/new-releases', {
     headers: { 'User-Agent': 'Quire/1.0', Accept: 'application/atom+xml' },
     cache: 'no-store',
   });
