@@ -2,7 +2,7 @@ import { XMLParser } from 'fast-xml-parser';
 import type { SourceAdapter, CatalogEntry } from '@/lib/types';
 
 const BASE = 'https://standardebooks.org';
-const SEARCH_URL = `${BASE}/feeds/opds/all`;
+const FEED_URL = `${BASE}/feeds/opds/all`;
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -35,40 +35,48 @@ function authorName(raw: OpdsEntry['author']): string {
   return obj?.name ?? 'Unknown';
 }
 
+function toAbsolute(href: string) {
+  return href.startsWith('http') ? href : `${BASE}${href}`;
+}
+
+async function fetchFeed(url: string): Promise<CatalogEntry[]> {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Quire/1.0', Accept: 'application/atom+xml' },
+      cache: 'no-store',
+    });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const data = parser.parse(xml);
+    const entries: OpdsEntry[] = data?.feed?.entry ?? [];
+    return entries.map((e): CatalogEntry => {
+      const links = e.link ?? [];
+      const coverHref = pickLink(links, 'http://opds-spec.org/image');
+      const acquireHref = pickLink(links, 'http://opds-spec.org/acquisition');
+      return {
+        sourceId: 'standard-ebooks',
+        externalId: e.id ?? '',
+        title: e.title ?? 'Untitled',
+        author: authorName(e.author),
+        language: e['dc:language'],
+        coverUrl: coverHref ? toAbsolute(coverHref) : undefined,
+        acquire: { kind: 'url', url: acquireHref ? toAbsolute(acquireHref) : '' },
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 export const standardEbooksAdapter: SourceAdapter = {
   id: 'standard-ebooks',
   name: 'Standard Ebooks',
 
-  async search(query, page = 1): Promise<CatalogEntry[]> {
-    const url = `${SEARCH_URL}?query=${encodeURIComponent(query)}&page=${page}`;
-    try {
-      const res = await fetch(url, {
-        headers: { 'User-Agent': 'Quire/1.0', Accept: 'application/atom+xml' },
-        cache: 'no-store',
-      });
-      if (!res.ok) return [];
-      const xml = await res.text();
-      const data = parser.parse(xml);
-      const entries: OpdsEntry[] = data?.feed?.entry ?? [];
+  async search(query, page = 1) {
+    return fetchFeed(`${FEED_URL}?query=${encodeURIComponent(query)}&page=${page}`);
+  },
 
-      return entries.map((e): CatalogEntry => {
-        const links = e.link ?? [];
-        const coverHref = pickLink(links, 'http://opds-spec.org/image');
-        const acquireHref = pickLink(links, 'http://opds-spec.org/acquisition');
-        const toAbsolute = (href: string) =>
-          href.startsWith('http') ? href : `${BASE}${href}`;
-        return {
-          sourceId: 'standard-ebooks',
-          externalId: e.id ?? '',
-          title: e.title ?? 'Untitled',
-          author: authorName(e.author),
-          language: e['dc:language'],
-          coverUrl: coverHref ? toAbsolute(coverHref) : undefined,
-          acquire: { kind: 'url', url: acquireHref ? toAbsolute(acquireHref) : '' },
-        };
-      });
-    } catch {
-      return [];
-    }
+  async browse() {
+    return fetchFeed(FEED_URL);
   },
 };

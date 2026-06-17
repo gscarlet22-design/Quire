@@ -12,4 +12,11 @@ export interface SourceAdapter {
   id: string;
   name: string;
   search(query: string, page?: number): Promise<CatalogEntry[]>;
+  browse?(): Promise<CatalogEntry[]>;
 }
+
+export type BrowseSection = {
+  id: string;
+  title: string;
+  entries: CatalogEntry[];
+};

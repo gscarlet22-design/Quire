@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
-import type { CatalogEntry } from '@/lib/types';
+import { useState, FormEvent, useEffect } from 'react';
+import type { BrowseSection, CatalogEntry } from '@/lib/types';
 import { ResultCard } from './ResultCard';
 
 type State = 'idle' | 'loading' | 'done' | 'error';
@@ -10,6 +10,14 @@ export function SearchInterface() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<CatalogEntry[]>([]);
   const [state, setState] = useState<State>('idle');
+  const [browse, setBrowse] = useState<BrowseSection[]>([]);
+
+  useEffect(() => {
+    fetch('/api/browse')
+      .then((r) => r.json())
+      .then(setBrowse)
+      .catch(() => {});
+  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -18,7 +26,7 @@ export function SearchInterface() {
     setState('loading');
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-      if (!res.ok) throw new Error('Search failed');
+      if (!res.ok) throw new Error();
       setResults(await res.json());
       setState('done');
     } catch {
@@ -53,10 +61,27 @@ export function SearchInterface() {
         <p className="mt-4 text-center text-sm text-zinc-500">No results found.</p>
       )}
 
-      {results.length > 0 && (
+      {state === 'done' && results.length > 0 && (
         <div className="mt-4 flex flex-col gap-3">
           {results.map((entry) => (
             <ResultCard key={`${entry.sourceId}:${entry.externalId}`} entry={entry} />
+          ))}
+        </div>
+      )}
+
+      {state === 'idle' && browse.length > 0 && (
+        <div className="mt-8 flex flex-col gap-8">
+          {browse.map((section) => (
+            <div key={section.id}>
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                {section.title}
+              </h2>
+              <div className="flex flex-col gap-3">
+                {section.entries.map((entry) => (
+                  <ResultCard key={`${entry.sourceId}:${entry.externalId}`} entry={entry} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
