@@ -1,5 +1,4 @@
 import type { CatalogEntry } from '@/lib/types';
-import Image from 'next/image';
 
 const SOURCE_LABELS: Record<string, string> = {
   'standard-ebooks': 'Standard Ebooks',
@@ -9,15 +8,13 @@ const SOURCE_LABELS: Record<string, string> = {
 export function ResultCard({ entry }: { entry: CatalogEntry }) {
   return (
     <div className="flex gap-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="relative h-24 w-16 flex-shrink-0 overflow-hidden rounded bg-zinc-100 dark:bg-zinc-800 [&_img]:object-cover">
+      <div className="relative h-24 w-16 flex-shrink-0 overflow-hidden rounded bg-zinc-100 dark:bg-zinc-800">
         {entry.coverUrl ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={entry.coverUrl}
-            alt={`Cover of ${entry.title}`}
-            fill
-            className="object-cover"
-            sizes="64px"
-            unoptimized
+            alt=""
+            className="h-full w-full object-cover"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-xs text-zinc-400">

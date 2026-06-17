@@ -44,7 +44,7 @@ export const standardEbooksAdapter: SourceAdapter = {
     try {
       const res = await fetch(url, {
         headers: { 'User-Agent': 'Quire/1.0', Accept: 'application/atom+xml' },
-        next: { revalidate: 300 },
+        cache: 'no-store',
       });
       if (!res.ok) return [];
       const xml = await res.text();
@@ -55,14 +55,16 @@ export const standardEbooksAdapter: SourceAdapter = {
         const links = e.link ?? [];
         const coverHref = pickLink(links, 'http://opds-spec.org/image');
         const acquireHref = pickLink(links, 'http://opds-spec.org/acquisition');
+        const toAbsolute = (href: string) =>
+          href.startsWith('http') ? href : `${BASE}${href}`;
         return {
           sourceId: 'standard-ebooks',
           externalId: e.id ?? '',
           title: e.title ?? 'Untitled',
           author: authorName(e.author),
           language: e['dc:language'],
-          coverUrl: coverHref ? `${BASE}${coverHref}` : undefined,
-          acquire: { kind: 'url', url: acquireHref ? `${BASE}${acquireHref}` : '' },
+          coverUrl: coverHref ? toAbsolute(coverHref) : undefined,
+          acquire: { kind: 'url', url: acquireHref ? toAbsolute(acquireHref) : '' },
         };
       });
     } catch {
