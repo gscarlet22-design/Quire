@@ -4,7 +4,7 @@ export async function GET() {
     cache: 'no-store',
   });
   const text = await res.text();
-  return new Response(`STATUS: ${res.status}\nCONTENT-TYPE: ${res.headers.get('content-type')}\n\n${text.slice(0, 2000)}`, {
+  return new Response(`STATUS: ${res.status}\nCONTENT-TYPE: ${res.headers.get('content-type')}\n\n${text.slice(0, 6000)}`, {
     headers: { 'Content-Type': 'text/plain' },
   });
 }
