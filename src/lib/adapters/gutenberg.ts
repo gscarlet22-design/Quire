@@ -24,7 +24,7 @@ interface OpdsEntry {
 }
 
 function pickLink(links: OpdsLink[] = [], rel: string): string {
-  const found = links.find((l) => l['@_rel'] === rel);
+  const found = links.find((l) => l['@_rel']?.startsWith(rel));
   return found?.['@_href'] ?? '';
 }
 
