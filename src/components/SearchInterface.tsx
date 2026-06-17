@@ -6,11 +6,20 @@ import { ResultCard } from './ResultCard';
 
 type State = 'idle' | 'loading' | 'done' | 'error';
 
+const ALL_SOURCES = [
+  { id: 'standard-ebooks', label: 'Standard Ebooks' },
+  { id: 'gutenberg', label: 'Project Gutenberg' },
+  { id: 'baen', label: 'Baen Free Library' },
+];
+
 export function SearchInterface() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<CatalogEntry[]>([]);
   const [state, setState] = useState<State>('idle');
   const [browse, setBrowse] = useState<BrowseSection[]>([]);
+  const [activeSources, setActiveSources] = useState<Set<string>>(
+    () => new Set(ALL_SOURCES.map((s) => s.id))
+  );
 
   useEffect(() => {
     fetch('/api/browse')
@@ -19,13 +28,29 @@ export function SearchInterface() {
       .catch(() => {});
   }, []);
 
+  function toggleSource(id: string) {
+    setActiveSources((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        if (next.size === 1) return prev; // keep at least one active
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const q = query.trim();
     if (!q) return;
     setState('loading');
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+      const sourcesParam = Array.from(activeSources).join(',');
+      const res = await fetch(
+        `/api/search?q=${encodeURIComponent(q)}&sources=${encodeURIComponent(sourcesParam)}`
+      );
       if (!res.ok) throw new Error();
       setResults(await res.json());
       setState('done');
@@ -52,6 +77,26 @@ export function SearchInterface() {
           {state === 'loading' ? 'Searching…' : 'Search'}
         </button>
       </form>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {ALL_SOURCES.map((src) => {
+          const active = activeSources.has(src.id);
+          return (
+            <button
+              key={src.id}
+              type="button"
+              onClick={() => toggleSource(src.id)}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                active
+                  ? 'border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-900'
+                  : 'border-zinc-300 bg-white text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400'
+              }`}
+            >
+              {src.label}
+            </button>
+          );
+        })}
+      </div>
 
       {state === 'error' && (
         <p className="mt-4 text-center text-sm text-red-500">Something went wrong. Try again.</p>

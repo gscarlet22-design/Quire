@@ -10,7 +10,11 @@ export async function GET(req: NextRequest) {
   const query = req.nextUrl.searchParams.get('q')?.trim();
   if (!query) return NextResponse.json([]);
 
-  const results = await Promise.all(adapters.map((a) => a.search(query)));
+  const sourcesParam = req.nextUrl.searchParams.get('sources');
+  const allowed = sourcesParam ? new Set(sourcesParam.split(',')) : null;
+  const active = allowed ? adapters.filter((a) => allowed.has(a.id)) : adapters;
+
+  const results = await Promise.all(active.map((a) => a.search(query)));
   const merged = results.flat();
 
   const seen = new Set<string>();
