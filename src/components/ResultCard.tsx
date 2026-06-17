@@ -9,7 +9,7 @@ const SOURCE_LABELS: Record<string, string> = {
 export function ResultCard({ entry }: { entry: CatalogEntry }) {
   return (
     <div className="flex gap-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="relative h-24 w-16 flex-shrink-0 overflow-hidden rounded bg-zinc-100 dark:bg-zinc-800">
+      <div className="relative h-24 w-16 flex-shrink-0 overflow-hidden rounded bg-zinc-100 dark:bg-zinc-800 [&_img]:object-cover">
         {entry.coverUrl ? (
           <Image
             src={entry.coverUrl}
