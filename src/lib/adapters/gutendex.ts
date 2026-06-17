@@ -23,7 +23,10 @@ export const gutendexAdapter: SourceAdapter = {
   async search(query, page = 1): Promise<CatalogEntry[]> {
     const url = `${BASE}/books/?search=${encodeURIComponent(query)}&page=${page}`;
     try {
-      const res = await fetch(url, { cache: 'no-store' });
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'Quire/1.0' },
+        cache: 'no-store',
+      });
       if (!res.ok) return [];
       const data = await res.json();
       const books: GutendexBook[] = data.results ?? [];
