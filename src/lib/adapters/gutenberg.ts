@@ -92,4 +92,17 @@ export const gutenbergAdapter: SourceAdapter = {
   async browse() {
     return fetchFeed(`${SEARCH_URL}?sort_order=downloads`);
   },
+
+  async browseSections() {
+    const [top, scifi, fantasy] = await Promise.all([
+      fetchFeed(`${SEARCH_URL}?sort_order=downloads`),
+      fetchFeed(`${SEARCH_URL}?query=subject%3A%22Science+Fiction%22&sort_order=downloads`),
+      fetchFeed(`${SEARCH_URL}?query=subject%3AFantasy&sort_order=downloads`),
+    ]);
+    return [
+      { id: 'gutenberg-top', title: 'Most Downloaded on Project Gutenberg', entries: top.slice(0, 8) },
+      { id: 'gutenberg-scifi', title: 'Sci-Fi on Project Gutenberg', entries: scifi.slice(0, 8) },
+      { id: 'gutenberg-fantasy', title: 'Fantasy on Project Gutenberg', entries: fantasy.slice(0, 8) },
+    ];
+  },
 };

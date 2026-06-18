@@ -13,6 +13,7 @@ export interface SourceAdapter {
   name: string;
   search(query: string, page?: number): Promise<CatalogEntry[]>;
   browse?(): Promise<CatalogEntry[]>;
+  browseSections?(): Promise<BrowseSection[]>;
 }
 
 export type BrowseSection = {

@@ -10,14 +10,22 @@ const BROWSE_LABELS: Record<string, string> = {
 export async function GET(req: Request) {
   const sourcesParam = new URL(req.url).searchParams.get('sources');
   const allowed = sourcesParam ? new Set(sourcesParam.split(',')) : null;
-  const active = adapters.filter((a) => a.browse && (!allowed || allowed.has(a.id)));
-
-  const sections = await Promise.all(
-    active.map(async (a): Promise<BrowseSection> => ({
-      id: a.id,
-      title: BROWSE_LABELS[a.id] ?? a.name,
-      entries: (await a.browse!()).slice(0, 8),
-    }))
+  const active = adapters.filter(
+    (a) => (a.browse || a.browseSections) && (!allowed || allowed.has(a.id))
   );
-  return NextResponse.json(sections);
+
+  const nested = await Promise.all(
+    active.map(async (a): Promise<BrowseSection[]> => {
+      if (a.browseSections) return a.browseSections();
+      return [
+        {
+          id: a.id,
+          title: BROWSE_LABELS[a.id] ?? a.name,
+          entries: (await a.browse!()).slice(0, 8),
+        },
+      ];
+    })
+  );
+
+  return NextResponse.json(nested.flat());
 }

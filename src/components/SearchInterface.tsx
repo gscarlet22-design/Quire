@@ -9,7 +9,6 @@ type State = 'idle' | 'loading' | 'done' | 'error';
 const ALL_SOURCES = [
   { id: 'standard-ebooks', label: 'Standard Ebooks' },
   { id: 'gutenberg', label: 'Project Gutenberg' },
-  { id: 'baen', label: 'Baen Free Library' },
 ];
 
 export function SearchInterface() {
