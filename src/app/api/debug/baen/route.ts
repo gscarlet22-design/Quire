@@ -17,7 +17,7 @@ export async function GET() {
     let m;
     while ((m = re.exec(text)) !== null) allbooksLinks.push(m[1]);
 
-    return Response.json({ freeLibContext: freeLibCtx, allbooksLinks: [...new Set(allbooksLinks)] });
+    return Response.json({ freeLibContext: freeLibCtx, allbooksLinks: Array.from(new Set(allbooksLinks)) });
   } catch (e) {
     return Response.json({ error: String(e) });
   }
