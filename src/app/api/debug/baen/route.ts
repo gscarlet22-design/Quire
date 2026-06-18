@@ -1,26 +1,21 @@
-// Probe sci-fi/fantasy OPDS sources as Baen alternative
-const CANDIDATES = [
-  'https://standardebooks.org/feeds/opds/subjects/science-fiction',
-  'https://standardebooks.org/feeds/opds/subjects/fantasy',
-  'https://catalog.feedbooks.com/publicdomain/browse/top.atom?cat=FGSF&limit=5',
-  'https://archive.org/services/opds',
-  'https://manybooks.net/opds',
-  'https://manybooks.net/api/opds',
+// Probe Internet Archive OPDS 2.0 endpoints for sci-fi/fantasy
+const PROBES = [
+  'https://archive.org/services/opds/catalog?query=subject%3Ascience+fiction+AND+mediatype%3Atexts+AND+licenseurl%3A*publicdomain*&sort=-downloads&limit=3',
+  'https://archive.org/services/opds/catalog?query=subject%3A%22science+fiction%22+AND+mediatype%3Atexts&sort=-downloads&limit=3',
+  'https://archive.org/services/opds/catalog?query=fantasy+mediatype%3Atexts&sort=-downloads&limit=3',
+  'https://archive.org/services/opds/catalog?query=science+fiction+mediatype%3Atexts&sort=-downloads&limit=3',
 ];
 
 export async function GET() {
   const results = await Promise.all(
-    CANDIDATES.map(async (url) => {
+    PROBES.map(async (url) => {
       try {
         const res = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
-            Accept: 'application/atom+xml, application/xml, text/xml, */*',
-          },
+          headers: { 'User-Agent': 'Quire/1.0', Accept: 'application/opds+json, application/json' },
           cache: 'no-store',
         });
         const text = await res.text();
-        return { url, status: res.status, contentType: res.headers.get('content-type'), preview: text.slice(0, 300) };
+        return { url, status: res.status, contentType: res.headers.get('content-type'), preview: text.slice(0, 600) };
       } catch (e) {
         return { url, error: String(e) };
       }
