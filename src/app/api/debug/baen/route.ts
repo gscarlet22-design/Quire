@@ -1,26 +1,28 @@
-// Probe Baen bookdata API and Magento REST API for free library catalog
-const PROBES = [
-  'https://www.baen.com/bookdata/getbooks?category=2012&page=1&limit=5',
-  'https://www.baen.com/bookdata/getbooks?filter=free&page=1&limit=5',
-  'https://www.baen.com/bookdata/catalog?category=2012',
-  'https://www.baen.com/bookdata/search?category=2012&page=1',
-  'https://www.baen.com/rest/V1/products?searchCriteria%5BfilterGroups%5D%5B0%5D%5Bfilters%5D%5B0%5D%5Bfield%5D=category_id&searchCriteria%5BfilterGroups%5D%5B0%5D%5Bfilters%5D%5B0%5D%5Bvalue%5D=2012&searchCriteria%5BpageSize%5D=3',
-];
-
+// Find product listings in Baen Free Library page HTML (82-150KB range)
 export async function GET() {
-  const results = await Promise.all(
-    PROBES.map(async (url) => {
-      try {
-        const res = await fetch(url, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Quire/1.0)', Accept: 'application/json, text/html' },
-          cache: 'no-store',
-        });
-        const text = await res.text();
-        return { url, status: res.status, contentType: res.headers.get('content-type'), preview: text.slice(0, 300) };
-      } catch (e) {
-        return { url, error: String(e) };
-      }
-    })
-  );
-  return Response.json(results);
+  try {
+    const res = await fetch('https://www.baen.com/allbooks/category/index/id/2012', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Quire/1.0)', Accept: 'text/html' },
+      cache: 'no-store',
+    });
+    const text = await res.text();
+
+    // Sample four chunks across the product area
+    const c1 = text.slice(82000, 83500);
+    const c2 = text.slice(100000, 101500);
+    const c3 = text.slice(120000, 121500);
+    const c4 = text.slice(140000, 141500);
+
+    // Also try to find the actual AJAX endpoint from inline JS
+    const fetchRe = /fetch\(['"`]([^'"`]+)['"`]/g;
+    const xhrRe = /(?:url|URL|endpoint)['":\s]+['"]([^'"]+)['"]/g;
+    const apiUrls: string[] = [];
+    let m;
+    while ((m = fetchRe.exec(text)) !== null) apiUrls.push(m[1]);
+    while ((m = xhrRe.exec(text)) !== null) apiUrls.push(m[1]);
+
+    return Response.json({ c1, c2, c3, c4, apiUrls: apiUrls.slice(0, 10) });
+  } catch (e) {
+    return Response.json({ error: String(e) });
+  }
 }
