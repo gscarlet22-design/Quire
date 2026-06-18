@@ -1,4 +1,4 @@
-// Inspect Baen Free Library listing page structure
+// Inspect Baen Free Library page for Magento data patterns
 export async function GET() {
   try {
     const res = await fetch('https://www.baen.com/allbooks/category/index/id/2012', {
@@ -7,26 +7,34 @@ export async function GET() {
     });
     const text = await res.text();
 
-    // Find product/book links
-    const bookLinks: string[] = [];
-    const bookRe = /href="(https?:\/\/www\.baen\.com\/[a-z0-9_-]+\/[a-z0-9_-]+[^"]*\.html[^"]*)"/gi;
+    // Magento embeds product data in x-magento-init script tags
+    const magentoIdx = text.indexOf('x-magento-init');
+    const magentoCtx = magentoIdx >= 0 ? text.slice(magentoIdx, magentoIdx + 500) : 'not found';
+
+    // Look for any JSON array with items/products
+    const itemsIdx = text.indexOf('"items"');
+    const itemsCtx = itemsIdx >= 0 ? text.slice(itemsIdx, itemsIdx + 400) : 'not found';
+
+    // Look for catalog_product_entity or similar
+    const catalogIdx = text.indexOf('catalog');
+    const catalogCtx = catalogIdx >= 0 ? text.slice(catalogIdx, catalogIdx + 300) : 'not found';
+
+    // Check for AJAX/API URL patterns
+    const ajaxRe = /["'](https?:\/\/[^"']*(?:catalog|product|list|search)[^"']*)/g;
+    const ajaxUrls: string[] = [];
     let m;
-    while ((m = bookRe.exec(text)) !== null) bookLinks.push(m[1]);
+    while ((m = ajaxRe.exec(text)) !== null) ajaxUrls.push(m[1]);
 
-    // Look for JSON product data (Magento often embeds it)
-    const jsonIdx = text.indexOf('"sku"');
-    const jsonCtx = jsonIdx >= 0 ? text.slice(jsonIdx, jsonIdx + 300) : 'no sku found';
-
-    // Sample chunk where book cards would appear
-    const productIdx = text.indexOf('product-item');
-    const productCtx = productIdx >= 0 ? text.slice(productIdx, productIdx + 600) : 'no product-item found';
+    // Sample from near the end of the body where product grids usually render
+    const bodyEnd = text.slice(Math.max(0, text.length - 8000), text.length - 6000);
 
     return Response.json({
       status: res.status,
-      pageLength: text.length,
-      bookLinks: Array.from(new Set(bookLinks)).slice(0, 10),
-      skuContext: jsonCtx,
-      productContext: productCtx,
+      magentoInitContext: magentoCtx,
+      itemsContext: itemsCtx,
+      catalogContext: catalogCtx,
+      ajaxUrls: Array.from(new Set(ajaxUrls)).slice(0, 8),
+      bodyEndSample: bodyEnd.slice(0, 800),
     });
   } catch (e) {
     return Response.json({ error: String(e) });
