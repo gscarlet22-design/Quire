@@ -1,34 +1,28 @@
-// Probe Baen's custom AJAX catalog endpoints
+// Probe sci-fi/fantasy OPDS sources as Baen alternative
+const CANDIDATES = [
+  'https://standardebooks.org/feeds/opds/subjects/science-fiction',
+  'https://standardebooks.org/feeds/opds/subjects/fantasy',
+  'https://catalog.feedbooks.com/publicdomain/browse/top.atom?cat=FGSF&limit=5',
+  'https://archive.org/services/opds',
+  'https://manybooks.net/opds',
+  'https://manybooks.net/api/opds',
+];
+
 export async function GET() {
-  const BASE = 'https://www.baen.com';
-
-  // Try extraSearch with various param combinations
-  const probes = [
-    { method: 'GET', url: `${BASE}/allbooks/category/extraSearch?category_id=2012&p=1&limit=5` },
-    { method: 'GET', url: `${BASE}/allbooks/category/extraSearch?id=2012&page=1` },
-    { method: 'POST', url: `${BASE}/allbooks/category/extraSearch`, body: JSON.stringify({ category_id: 2012, p: 1, limit: 5 }) },
-    { method: 'POST', url: `${BASE}/allbooks/category/extraSearch`, body: 'category_id=2012&p=1&limit=5' },
-    { method: 'GET', url: `${BASE}/allbooks/category/extraSearch?category=2012&p=1` },
-  ];
-
   const results = await Promise.all(
-    probes.map(async ({ method, url, body }) => {
+    CANDIDATES.map(async (url) => {
       try {
-        const headers: Record<string, string> = {
-          'User-Agent': 'Mozilla/5.0 (compatible; Quire/1.0)',
-          Accept: 'application/json, text/html, */*',
-          'X-Requested-With': 'XMLHttpRequest',
-        };
-        if (body && typeof body === 'string' && body.startsWith('{')) {
-          headers['Content-Type'] = 'application/json';
-        } else if (body) {
-          headers['Content-Type'] = 'application/x-www-form-urlencoded';
-        }
-        const res = await fetch(url, { method, headers, body, cache: 'no-store' } as RequestInit);
+        const res = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+            Accept: 'application/atom+xml, application/xml, text/xml, */*',
+          },
+          cache: 'no-store',
+        });
         const text = await res.text();
-        return { method, url, status: res.status, contentType: res.headers.get('content-type'), preview: text.slice(0, 400) };
+        return { url, status: res.status, contentType: res.headers.get('content-type'), preview: text.slice(0, 300) };
       } catch (e) {
-        return { method, url, error: String(e) };
+        return { url, error: String(e) };
       }
     })
   );
