@@ -1,34 +1,26 @@
-// Inspect product grid section of Baen Free Library page
+// Probe Baen bookdata API and Magento REST API for free library catalog
+const PROBES = [
+  'https://www.baen.com/bookdata/getbooks?category=2012&page=1&limit=5',
+  'https://www.baen.com/bookdata/getbooks?filter=free&page=1&limit=5',
+  'https://www.baen.com/bookdata/catalog?category=2012',
+  'https://www.baen.com/bookdata/search?category=2012&page=1',
+  'https://www.baen.com/rest/V1/products?searchCriteria%5BfilterGroups%5D%5B0%5D%5Bfilters%5D%5B0%5D%5Bfield%5D=category_id&searchCriteria%5BfilterGroups%5D%5B0%5D%5Bfilters%5D%5B0%5D%5Bvalue%5D=2012&searchCriteria%5BpageSize%5D=3',
+];
+
 export async function GET() {
-  try {
-    const res = await fetch('https://www.baen.com/allbooks/category/index/id/2012', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Quire/1.0)', Accept: 'text/html' },
-      cache: 'no-store',
-    });
-    const text = await res.text();
-
-    // The product grid is in the middle of the page — sample chunks
-    const chunk1 = text.slice(40000, 41500);
-    const chunk2 = text.slice(60000, 61500);
-    const chunk3 = text.slice(80000, 81500);
-
-    // Look for any href containing a book slug (not allbooks, not media)
-    const hrefRe = /href="(\/[a-z][a-z0-9-]+\/[a-z][a-z0-9-]+[^"]*)"/g;
-    const hrefs: string[] = [];
-    let m;
-    while ((m = hrefRe.exec(text)) !== null) {
-      const h = m[1];
-      if (!h.startsWith('/allbooks') && !h.startsWith('/media') && !h.startsWith('/customer') && !h.startsWith('/checkout'))
-        hrefs.push(h);
-    }
-
-    return Response.json({
-      chunk1,
-      chunk2,
-      chunk3,
-      nonNavHrefs: Array.from(new Set(hrefs)).slice(0, 15),
-    });
-  } catch (e) {
-    return Response.json({ error: String(e) });
-  }
+  const results = await Promise.all(
+    PROBES.map(async (url) => {
+      try {
+        const res = await fetch(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Quire/1.0)', Accept: 'application/json, text/html' },
+          cache: 'no-store',
+        });
+        const text = await res.text();
+        return { url, status: res.status, contentType: res.headers.get('content-type'), preview: text.slice(0, 300) };
+      } catch (e) {
+        return { url, error: String(e) };
+      }
+    })
+  );
+  return Response.json(results);
 }
