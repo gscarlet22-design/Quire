@@ -1,4 +1,4 @@
-// Inspect Baen Free Library page for Magento data patterns
+// Inspect product grid section of Baen Free Library page
 export async function GET() {
   try {
     const res = await fetch('https://www.baen.com/allbooks/category/index/id/2012', {
@@ -7,34 +7,26 @@ export async function GET() {
     });
     const text = await res.text();
 
-    // Magento embeds product data in x-magento-init script tags
-    const magentoIdx = text.indexOf('x-magento-init');
-    const magentoCtx = magentoIdx >= 0 ? text.slice(magentoIdx, magentoIdx + 500) : 'not found';
+    // The product grid is in the middle of the page — sample chunks
+    const chunk1 = text.slice(40000, 41500);
+    const chunk2 = text.slice(60000, 61500);
+    const chunk3 = text.slice(80000, 81500);
 
-    // Look for any JSON array with items/products
-    const itemsIdx = text.indexOf('"items"');
-    const itemsCtx = itemsIdx >= 0 ? text.slice(itemsIdx, itemsIdx + 400) : 'not found';
-
-    // Look for catalog_product_entity or similar
-    const catalogIdx = text.indexOf('catalog');
-    const catalogCtx = catalogIdx >= 0 ? text.slice(catalogIdx, catalogIdx + 300) : 'not found';
-
-    // Check for AJAX/API URL patterns
-    const ajaxRe = /["'](https?:\/\/[^"']*(?:catalog|product|list|search)[^"']*)/g;
-    const ajaxUrls: string[] = [];
+    // Look for any href containing a book slug (not allbooks, not media)
+    const hrefRe = /href="(\/[a-z][a-z0-9-]+\/[a-z][a-z0-9-]+[^"]*)"/g;
+    const hrefs: string[] = [];
     let m;
-    while ((m = ajaxRe.exec(text)) !== null) ajaxUrls.push(m[1]);
-
-    // Sample from near the end of the body where product grids usually render
-    const bodyEnd = text.slice(Math.max(0, text.length - 8000), text.length - 6000);
+    while ((m = hrefRe.exec(text)) !== null) {
+      const h = m[1];
+      if (!h.startsWith('/allbooks') && !h.startsWith('/media') && !h.startsWith('/customer') && !h.startsWith('/checkout'))
+        hrefs.push(h);
+    }
 
     return Response.json({
-      status: res.status,
-      magentoInitContext: magentoCtx,
-      itemsContext: itemsCtx,
-      catalogContext: catalogCtx,
-      ajaxUrls: Array.from(new Set(ajaxUrls)).slice(0, 8),
-      bodyEndSample: bodyEnd.slice(0, 800),
+      chunk1,
+      chunk2,
+      chunk3,
+      nonNavHrefs: Array.from(new Set(hrefs)).slice(0, 15),
     });
   } catch (e) {
     return Response.json({ error: String(e) });
